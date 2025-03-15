@@ -112,7 +112,3 @@ Run the smart contract tests:
 ```bash
 npx hardhat test
 ```
-
-## License
-
-MIT
