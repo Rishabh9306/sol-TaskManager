@@ -1,241 +1,118 @@
-# Blockchain-Based Task Manager
+# Blockchain Task Manager
 
 A decentralized task management application built on Ethereum/Polygon that allows users to create, edit, complete, and delete tasks on the blockchain.
 
-## Features
+## Project Structure
 
-- Create tasks with title, description, priority level, and due date
+- `contracts/`: Smart contract code
+- `frontend/`: React frontend application
+- `scripts/`: Deployment and utility scripts
+- `test/`: Smart contract tests
+
+## Smart Contract Features
+
+- Create tasks with title and description
 - Edit existing tasks
-- Mark tasks as completed or uncompleted
+- Mark tasks as completed
 - Delete tasks
-- View all your tasks
-- Filter tasks by completion status, priority level, or due date
-- Secure ownership - only task owners can modify their tasks
-- Admin controls for contract management
-- Gas-optimized for efficient blockchain operations
+- Task ownership verification
+- Priority levels and due dates
 
-## Smart Contract
+## Prerequisites
 
-The TaskManager smart contract is built with Solidity and includes:
+- Node.js 16+ and npm/pnpm
+- MetaMask browser extension
+- Sepolia or Mumbai testnet ETH/MATIC
 
-- Task struct with ID, title, description, completion status, owner, priority, due date, and creation timestamp
-- Efficient storage using mappings
-- Access control to ensure only task owners can modify their tasks
-- Admin functions restricted with OpenZeppelin's Ownable
-- Pausable functionality for emergency situations
-- Events for frontend notifications
-- Task filtering capabilities
-- Gas optimizations to reduce transaction costs
+## Setup
 
-## Gas Optimizations
-
-The contract includes several gas optimizations:
-
-1. **Use of `calldata` instead of `memory`** for function parameters that don't need to be modified
-2. **Minimized state variable writes** by checking if values have changed before updating
-3. **Use of `external` instead of `public`** for functions not called internally
-4. **Efficient storage access** by using local storage pointers
-5. **Conditional event emissions** to avoid unnecessary operations
-6. **Optimized task deletion** using the swap-and-pop pattern
-
-## Access Control
-
-The contract implements two levels of access control:
-
-1. **Task-level access control**: Only the owner of a task can edit, complete, or delete it
-   - Enforced with `require(msg.sender == task.owner)` checks
-
-2. **Admin-level access control**: Contract owner has special privileges
-   - Uses OpenZeppelin's `Ownable` contract with `onlyOwner` modifier
-   - Admin can pause/unpause the contract
-   - Admin can set maximum tasks per user
-   - Admin can delete any task in emergency situations
-   - Admin can view global statistics
-
-## Events
-
-The contract emits the following events:
-
-- `TaskAdded(uint256 taskId, address owner, string title, Priority priority, uint256 dueDate)`
-- `TaskUpdated(uint256 taskId, string newTitle, string newDescription, Priority priority, uint256 dueDate)`
-- `TaskCompleted(uint256 taskId, bool completed)`
-- `TaskDeleted(uint256 taskId)`
-- `ContractPaused(bool paused)`
-- `MaxTasksPerUserChanged(uint256 maxTasks)`
-
-## Tech Stack
-
-- **Smart Contract**: Solidity ^0.8.0
-- **Development Environment**: Hardhat
-- **Testing**: Chai & Mocha
-- **Deployment Networks**: Ethereum Sepolia, Polygon Mumbai
-- **RPC Providers**: Infura or Alchemy
-- **Frontend** (to be implemented): React, Ethers.js, TailwindCSS
-
-## Setup Instructions
-
-### Prerequisites
-
-- Node.js (v14+)
-- npm or yarn
-- MetaMask wallet
-- Infura or Alchemy API key
-- Testnet ETH/MATIC (from faucets)
-
-### Installation
-
-1. Clone the repository:
-   ```
-   git clone <repository-url>
-   cd blockchain-task-manager
-   ```
-
+1. Clone the repository
 2. Install dependencies:
-   ```
+   ```bash
    npm install
+   # or
+   pnpm install
    ```
-
-3. Create a `.env` file based on `.env.example` and fill in your values:
-   ```
+3. Copy `.env.example` to `.env` and update the values:
+   ```bash
    cp .env.example .env
    ```
-   
-   Required environment variables:
-   ```
-   SEPOLIA_URL=https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID
-   # or
-   MUMBAI_URL=https://polygon-mumbai.infura.io/v3/YOUR_INFURA_PROJECT_ID
-   
-   PRIVATE_KEY=your_wallet_private_key_without_0x_prefix
-   
-   ETHERSCAN_API_KEY=your_etherscan_api_key
-   # or
-   POLYGONSCAN_API_KEY=your_polygonscan_api_key
-   ```
+4. Update the `.env` file with your:
+   - Infura/Alchemy API keys for Sepolia and Mumbai
+   - Private key for deployment
+   - Etherscan/Polygonscan API keys for verification
 
-4. Compile the smart contract:
-   ```
-   npx hardhat compile
-   ```
+## Deploying the Smart Contract
 
-### Testing
+### Deploying to Sepolia
 
-Run the test suite to ensure everything is working correctly:
-
-```
-npx hardhat test
+```bash
+npx hardhat run scripts/deploy.js --network sepolia
 ```
 
-### Local Development
+### Deploying to Mumbai
 
-Start a local Hardhat node:
-
-```
-npx hardhat node
-```
-
-In a separate terminal, deploy the contract to the local network:
-
-```
-npx hardhat run scripts/deploy.js --network localhost
-```
-
-### Deployment to Testnet
-
-Deploy to Sepolia testnet:
-
-```
-npm run deploy:sepolia
-```
-
-Deploy to Mumbai testnet:
-
-```
-npm run deploy:mumbai
+```bash
+npx hardhat run scripts/deploy.js --network mumbai
 ```
 
 The deployment script will:
-1. Connect to the specified network using your Infura/Alchemy API key
-2. Deploy the TaskManager contract using your wallet
-3. Wait for confirmation of the deployment
+1. Compile the contract
+2. Deploy it to the specified network
+3. Wait for confirmations
 4. Verify the contract on Etherscan/Polygonscan
-5. Output a deployment summary with the contract address and transaction details
+5. Save deployment information to `deployments/{network}.json`
+6. Update the frontend `.env.local` file with the contract address
 
-## Contract Usage Examples
+## Verifying the Contract
 
-### Creating a Task
+The deployment script attempts to verify the contract automatically. If verification fails, you can manually verify using:
 
-```javascript
-// Create a task with default priority (Medium) and no due date
-const tx1 = await taskManager.addTask("Complete project", "Finish the blockchain task manager");
-await tx1.wait();
-
-// Create a high priority task with a due date
-const dueDate = Math.floor(Date.now() / 1000) + 86400; // 1 day from now
-const tx2 = await taskManager.addTask("Urgent task", "Must be done ASAP", 2, dueDate);
-await tx2.wait();
+```bash
+npx hardhat verify --network sepolia DEPLOYED_CONTRACT_ADDRESS
+# or
+npx hardhat verify --network mumbai DEPLOYED_CONTRACT_ADDRESS
 ```
 
-### Fetching Tasks
+## Frontend Setup
 
-```javascript
-// Fetch all tasks
-const allTasks = await taskManager.fetchAllTasks();
+After deploying the contract:
 
-// Fetch only completed tasks
-const completedTasks = await taskManager.fetchTasksByStatus(true);
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
 
-// Fetch only high priority tasks
-const highPriorityTasks = await taskManager.fetchTasksByPriority(2);
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   pnpm install
+   ```
 
-// Fetch tasks due within the next 24 hours
-const urgentTasks = await taskManager.fetchTasksDueSoon();
+3. Update the `.env.local` file with your deployed contract addresses (the deployment script should do this automatically)
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   # or
+   pnpm dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+## Deploying the Frontend
+
+See the [frontend README](./frontend/README.md) for instructions on deploying the frontend to Vercel or Netlify.
+
+## Testing
+
+Run the smart contract tests:
+
+```bash
+npx hardhat test
 ```
-
-### Managing Tasks
-
-```javascript
-// Complete a task
-const tx1 = await taskManager.completeTask(taskId);
-await tx1.wait();
-
-// Mark a completed task as not completed
-const tx2 = await taskManager.uncompleteTask(taskId);
-await tx2.wait();
-
-// Edit a task
-const tx3 = await taskManager.editTask(taskId, "New title", "New description", 1, newDueDate);
-await tx3.wait();
-
-// Delete a task
-const tx4 = await taskManager.deleteTask(taskId);
-await tx4.wait();
-```
-
-### Admin Functions
-
-```javascript
-// Pause the contract in emergency situations
-await taskManager.setPaused(true);
-
-// Unpause the contract
-await taskManager.setPaused(false);
-
-// Set maximum tasks per user
-await taskManager.setMaxTasksPerUser(50);
-
-// Delete any task (admin only)
-await taskManager.adminDeleteTask(taskId);
-
-// Get total task count across all users
-const totalTasks = await taskManager.getTotalTaskCount();
-```
-
-## Contract Address
-
-- Sepolia: `<to-be-filled-after-deployment>`
-- Mumbai: `<to-be-filled-after-deployment>`
 
 ## License
 
-MIT 
+MIT
